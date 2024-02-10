@@ -19,7 +19,7 @@ class MeshPyvista(object):
         self.mask = None
         self.mesh = None
 
-        self.window_sinc_settings = {'Iterations': 20, 'Passband': 0.001, 'Angle': 60.0}
+        self.window_sinc_settings = {'Iterations': 20, 'Passband': 0.001, 'Angle': 60}
 
         if create_mask:
             self.compute_mask()
@@ -58,7 +58,7 @@ class MeshPyvista(object):
     def compute_mask(self):
         if self.contour and self.dimensions and self.spacing and self.origin:
             slice_check = np.zeros(self.dimensions[2])
-            self.mask = np.zeros([self.dimensions[2], self.dimensions[0], self.dimensions[1]], dtype=np.uint8)
+            hold_mask = np.zeros([self.dimensions[2], self.dimensions[0], self.dimensions[1]], dtype=np.uint8)
             for c in self.contour:
                 slice_num = int(np.round((c[0][2] - self.origin[2]) / float(self.spacing[2])))
 
@@ -69,10 +69,11 @@ class MeshPyvista(object):
                 cv2.fillPoly(image, new_contour, 1)
 
                 if slice_check[slice_num] == 0:
-                    self.mask[slice_num, :, :] = image
+                    hold_mask[slice_num, :, :] = image
                     slice_check[slice_num] = 1
                 else:
-                    self.mask[slice_num, :, :] = self.mask[slice_num, :, :] + image
+                    hold_mask[slice_num, :, :] = hold_mask[slice_num, :, :] + image
+            self.mask = (hold_mask > 0).astype(np.uint8)
         else:
             if not self.contour:
                 ValueError('No contour')
