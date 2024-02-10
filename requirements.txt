@@ -1,0 +1,8 @@
+numpy==1.19.5
+open3d==0.18.0
+opencv_python==4.9.0.80
+pyacvd==0.2.10
+pyvista==0.43.1
+scipy==1.10.1
+SimpleITK==2.2.1
+vtk==9.3.0
