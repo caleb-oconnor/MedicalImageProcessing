@@ -88,7 +88,7 @@ class MeshPyvista(object):
         if self.mask.any() and self.dimensions and self.spacing and self.origin:
             label = numpy_support.numpy_to_vtk(num_array=np.asarray(self.mask).ravel(), deep=True, array_type=vtk.VTK_FLOAT)
             img_vtk = vtk.vtkImageData()
-            img_vtk.SetDimensions(self.dimensions)
+            img_vtk.SetDimensions([self.dimensions[1], self.dimensions[0], self.dimensions[2]])
             img_vtk.SetSpacing(self.spacing)
             img_vtk.SetOrigin(self.origin)
             img_vtk.GetPointData().SetScalars(label)
