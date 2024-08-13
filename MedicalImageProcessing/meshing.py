@@ -88,6 +88,7 @@ class MeshPyvista(object):
         if self.mask.any() and self.dimensions and self.spacing and self.origin:
             label = numpy_support.numpy_to_vtk(num_array=np.asarray(self.mask).ravel(), deep=True, array_type=vtk.VTK_FLOAT)
             img_vtk = vtk.vtkImageData()
+            # img_vtk.Set
             img_vtk.SetDimensions([self.dimensions[1], self.dimensions[0], self.dimensions[2]])
             img_vtk.SetSpacing(self.spacing)
             img_vtk.SetOrigin(self.origin)
@@ -129,3 +130,12 @@ class MeshPyvista(object):
         clus = pyacvd.Clustering(self.mesh)
         clus.cluster(points)
         self.mesh = clus.create_mesh()
+
+
+def merge_meshes(meshes):
+    new_mesh = meshes[0]
+    for ii, mesh in enumerate(meshes):
+        if ii > 0:
+            new_mesh.merge(mesh, merge_points=True, inplace=True)
+
+    return new_mesh
