@@ -63,6 +63,20 @@ class ICPvtk(object):
         return {'Min': np.min(d_exact), 'Mean': np.mean(d_exact), 'Max': np.max(d_exact)}
 
 
+def com_transfer(ref_mesh, mov_mesh):
+    ref_com = ref_mesh.center
+    mov_com = mov_mesh.center
+
+    rotation_matrix = np.identity(4)
+    angles = np.asarray([0, 0, 0])
+    translation = mov_com - ref_com
+    rotation_matrix[0, 3] = translation[0]
+    rotation_matrix[1, 3] = translation[1]
+    rotation_matrix[2, 3] = translation[2]
+
+    return rotation_matrix, angles, translation
+
+
 def transform_mesh(mesh, com, angles, translation, order='xyz'):
     if order == 'xyz':
         mesh_x = mesh.rotate_x(angles[0], point=(com[0], com[1], com[2]))
