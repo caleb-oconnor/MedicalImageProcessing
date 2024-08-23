@@ -19,14 +19,8 @@ class ICPvtk(object):
         self.target = None
         self.reverse_transform = False
 
-        if select_smallest:
-            if ref.volume > mov.volume:
-                self.source = mov
-                self.target = ref
-            else:
-                self.source = ref
-                self.target = mov
-                self.reverse_transform = True
+        self.source = mov
+        self.target = ref
 
     def update_parameters(self, landmarks=None, distance=1e-5, iterations=1000):
         if landmarks:
@@ -116,12 +110,23 @@ def euler_transform(rotation=None, translation=None, center=None, angles='Radian
 
 
 def convert_transformation_matrix_to_angles(matrix):
+    """
+    Gets the angles for a rotation matrix in zyx order.
+
+    :param matrix: rotation matrix
+    :return:
+    """
     r11, r12, r13 = matrix[0][0:3]
     r21, r22, r23 = matrix[1][0:3]
     r31, r32, r33 = matrix[2][0:3]
 
-    angle_z = np.arctan(r21 / r11)
-    angle_y = np.arctan(-r31 * np.cos(angle_z) / r11)
-    angle_x = np.arctan(r32 / r33)
+    angle_y = np.arcsin(r13) * (180 / np.pi)
+    if np.abs(r13) < .999:
+        angle_x = np.arctan(-r23 / r33) * (180 / np.pi)
+        angle_z = np.arctan(-r12 / r11) * (180 / np.pi)
+    else:
+        angle_x = np.arctan(r32 / r22) * (180 / np.pi)
+        angle_z = 0
 
-    return [angle_x * 180 / np.pi, angle_y * 180 / np.pi, angle_z * 180 / np.pi]
+    return [angle_z, angle_y, angle_x]
+
