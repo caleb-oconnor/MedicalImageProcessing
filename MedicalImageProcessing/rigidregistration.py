@@ -64,9 +64,9 @@ def com_transfer(ref_mesh, mov_mesh):
     rotation_matrix = np.identity(4)
     angles = np.asarray([0, 0, 0])
     translation = mov_com - ref_com
-    rotation_matrix[0, 3] = translation[0]
-    rotation_matrix[1, 3] = translation[1]
-    rotation_matrix[2, 3] = translation[2]
+    rotation_matrix[0, 3] = -translation[0]
+    rotation_matrix[1, 3] = -translation[1]
+    rotation_matrix[2, 3] = -translation[2]
 
     return rotation_matrix, angles, translation
 
@@ -111,7 +111,7 @@ def euler_transform(rotation=None, translation=None, center=None, angles='Radian
 
 def convert_transformation_matrix_to_angles(matrix):
     """
-    Gets the angles for a rotation matrix in zyx order.
+    Gets the angles for a rotation matrix in zyx order. Angles transform the moving to the reference.
 
     :param matrix: rotation matrix
     :return:
