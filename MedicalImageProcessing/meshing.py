@@ -1,5 +1,6 @@
 
 import cv2
+import meshpy
 import pyacvd
 import pyvista as pv
 
@@ -9,7 +10,53 @@ import vtk
 from vtk.util import numpy_support
 
 
-class MeshPyvista(object):
+class Geometry(object):
+    def __init__(self, mesh):
+        self.mesh = mesh
+
+    def expansion(self, expansion=1):
+        directions = np.asarray(self.mesh.points) - self.mesh.center
+        unit_directions = directions / np.linalg.norm(directions)
+        new_points = np.asarray(self.mesh.points) + unit_directions * expansion
+        self.mesh.points = new_points
+
+    def contraction(self, contraction=1):
+        directions = np.asarray(self.mesh.points) - self.mesh.center
+        unit_directions = directions / np.linalg.norm(directions)
+        new_points = np.asarray(self.mesh.points) - unit_directions * contraction
+        self.mesh.points = new_points
+
+    def boolean(self, boolean_meshes=None, boolean_type=None):
+        if boolean_meshes is not None and boolean_type is not None:
+            for ii, m in enumerate(union_meshes):
+                if boolean_type == 'Union':
+                    self.mesh = self.mesh.boolean_union(m)
+
+                elif boolean_type == 'Intersect':
+                    self.mesh = self.mesh.boolean_intersection(m)
+
+                elif boolean_type == 'Subtract':
+                    self.mesh = self.mesh.boolean_difference(m)
+
+    def advanced(self, instructions=None):
+        if instructions is not None:
+            for instruct in instructions:
+                if instruct[0] == 'Expansion':
+                    self.expansion(instruct[1])
+
+                elif instruct[0] == 'Contraction':
+                    self.contraction(instruct[1])
+
+                elif instruct[0] == 'Boolean':
+                    self.boolean(boolean_meshes=instruct[1], boolean_type=instruct[0])
+
+
+class MeshForFEM(object):
+    def __init__(self, ref_mesh, target_mesh, points=None):
+        print('meshing')
+
+
+class ContourToMesh(object):
     def __init__(self, contour=None, spacing=None, origin=None, dimensions=None, create_mask=False):
         self.contour = contour
         self.spacing = spacing
