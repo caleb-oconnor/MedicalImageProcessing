@@ -1,3 +1,15 @@
+"""
+Morfeus lab
+The University of Texas
+MD Anderson Cancer Center
+Author - Caleb O'Connor
+Email - csoconnor@mdanderson.org
+
+Description:
+
+Structure:
+
+"""
 
 import copy
 
@@ -133,67 +145,23 @@ class ICPo3d(object):
         return self.registration.correspondence_set
 
 
-def com_transfer(ref_mesh, mov_mesh):
-    ref_com = ref_mesh.center
-    mov_com = mov_mesh.center
+class MeshCenterOfMass(object):
+    def __init__(self, ref, mov):
+        self.ref = ref
+        self.mov = mov
 
-    rotation_matrix = np.identity(4)
-    angles = np.asarray([0, 0, 0])
-    translation = mov_com - ref_com
-    rotation_matrix[0, 3] = -translation[0]
-    rotation_matrix[1, 3] = -translation[1]
-    rotation_matrix[2, 3] = -translation[2]
+        self.matrix = None
 
-    return rotation_matrix, angles, translation
+    def com_transfer(self):
+        ref_com = self.ref.center
+        mov_com = self.mov.center
 
+        translation = mov_com - ref_com
 
-def transform_mesh(mesh, com, angles, translation, order='xyz'):
-    if order == 'xyz':
-        mesh_x = mesh.rotate_x(angles[0], point=(com[0], com[1], com[2]))
-        mesh_y = mesh_x.rotate_y(angles[1], point=(com[0], com[1], com[2]))
-        mesh_z = mesh_y.rotate_z(angles[2], point=(com[0], com[1], com[2]))
-        new_mesh = mesh_z.translate((translation[0], translation[1], translation[2]))
-    else:
-        new_mesh = mesh
+        self.matrix = np.identity(4)
+        self.matrix[0, 3] = -translation[0]
+        self.matrix[1, 3] = -translation[1]
+        self.matrix[2, 3] = -translation[2]
 
-    return new_mesh
-
-
-def euler_transform(rotation=None, translation=None, center=None, angles='Radians'):
-    if angles == 'Degrees':
-        rotation = [rotation[0] * np.pi/180, rotation[1] * np.pi/180, rotation[2] * np.pi/180]
-
-    transform = sitk.Euler3DTransform()
-    if rotation is not None:
-        transform.SetRotation(rotation[0], rotation[1], rotation[2])
-    if translation is not None:
-        transform.SetTranslation(translation)
-    if center is not None:
-        transform.SetCenter(center)
-
-    transform.SetComputeZYX(True)
-
-    return transform
-
-
-def convert_transformation_matrix_to_angles(matrix):
-    """
-    Gets the angles for a rotation matrix in zyx order. Angles transform the moving to the reference.
-
-    :param matrix: rotation matrix
-    :return:
-    """
-    r11, r12, r13 = matrix[0][0:3]
-    r21, r22, r23 = matrix[1][0:3]
-    r31, r32, r33 = matrix[2][0:3]
-
-    angle_y = np.arcsin(r13) * (180 / np.pi)
-    if np.abs(r13) < .999:
-        angle_x = np.arctan(-r23 / r33) * (180 / np.pi)
-        angle_z = np.arctan(-r12 / r11) * (180 / np.pi)
-    else:
-        angle_x = np.arctan(r32 / r22) * (180 / np.pi)
-        angle_z = 0
-
-    return [angle_z, angle_y, angle_x]
+        return self.matrix
 
