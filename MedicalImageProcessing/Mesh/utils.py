@@ -12,7 +12,7 @@ Structure:
 """
 
 import numpy as np
-import pyista as pv
+import pyvista as pv
 
 
 def merge(mesh_list):
