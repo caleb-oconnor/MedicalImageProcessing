@@ -35,9 +35,27 @@ class Refinement(object):
 
         return self.mesh
 
-    def cluster(self, points):
+    def cluster(self, points=None):
+        if points is None:
+            points = self.compute_points()
         clus = pyacvd.Clustering(self.mesh)
         clus.cluster(points)
         self.mesh = clus.create_mesh()
 
         return self.mesh
+
+    def decimate(self, percent=None):
+        if percent is None:
+            percent = self.compute_point_percentage()
+
+        self.mesh.decimate(percent)
+
+        return self.mesh
+
+    def compute_points(self):
+        return np.round(10 * np.sqrt(self.mesh.number_of_points))
+
+    def compute_point_percentage(self):
+        points = self.compute_points()
+
+        return 1 - (points / self.mesh.number_of_points)
