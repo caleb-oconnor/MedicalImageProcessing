@@ -28,7 +28,7 @@ class ICPvtk(object):
         self.source = mov
         self.target = ref
 
-        self.landmarks = int(np.round(len(mov.points)/10)),
+        self.landmarks = int(np.round(len(mov.points)/10))
         self.distance = 1e-5
         self.iterations = 1000
 
@@ -79,8 +79,10 @@ class ICPo3d(object):
     def __init__(self, ref_pv=None, mov_pv=None):
         self.ref_pcd = PointCloud()
         self.ref_pcd.points = Vector3dVector(ref_pv.points)
+
         self.mov_pcd = PointCloud()
         self.mov_pcd.points = Vector3dVector(mov_pv.points)
+        self.mov_pcd.normals = o3d.utility.Vector3dVector(np.asarray(mov_pv.point_normals))
 
         self.distance = 1
         self.iterations = 1000
@@ -92,9 +94,6 @@ class ICPo3d(object):
 
         self.registration = None
         self.parameter_results = {'transform': None, 'fitness': None, 'rmse': None}
-        self.angles = None
-        self.translation = None
-        self.new_mesh = None
 
     def set_initial_transform(self, transform):
         self.initial_transform = transform
@@ -112,34 +111,30 @@ class ICPo3d(object):
         if fitness:
             self.fitness = fitness
 
-    def compute(self, com_matching=True):
+    def compute(self, com_matching=True, method='point'):
         if com_matching:
             c = self.mov_pcd.get_center() - self.ref_pcd.get_center()
             self.initial_transform = np.asarray([[1, 0, 0, c[0]], [0, 1, 0, c[1]], [0, 0, 1, c[2]], [0, 0, 0, 1]])
         else:
             self.initial_transform = np.identity(4, dtye=np.float32)
 
-        self.registration = registration_icp(self.ref_pcd, self.mov_pcd, self.distance, self.initial_transform,
-                                             TransformationEstimationPointToPoint(),
-                                             ICPConvergenceCriteria(max_iteration=self.iterations,
-                                                                    relative_rmse=self.rmse,
-                                                                    relative_fitness=self.fitness))
+        if method == 'point':
+            self.registration = registration_icp(self.ref_pcd, self.mov_pcd, self.distance, self.initial_transform,
+                                                 TransformationEstimationPointToPoint(),
+                                                 ICPConvergenceCriteria(max_iteration=self.iterations,
+                                                                        relative_rmse=self.rmse,
+                                                                        relative_fitness=self.fitness))
+        else:
+            self.registration = registration_icp(self.ref_pcd, self.mov_pcd, self.distance, self.initial_transform,
+                                                 TransformationEstimationPointToPlane())
 
         self.parameter_results['transform'] = self.registration.transformation
         self.parameter_results['fitness'] = self.registration.fitness
         self.parameter_results['rmse'] = self.registration.inlier_rmse
 
-        r11, r12, r13 = self.parameter_results['transform'][0][0:3]
-        r21, r22, r23 = self.parameter_results['transform'][1][0:3]
-        r31, r32, r33 = self.parameter_results['transform'][2][0:3]
+        matrix = self.parameter_results['transform']
 
-        angle_z = np.arctan(r21 / r11)
-        angle_y = np.arctan(-r31 * np.cos(angle_z) / r11)
-        angle_x = np.arctan(r32 / r33)
-
-        self.new_mesh = self.ref_pcd.transform(self.parameter_results['transform'])
-        self.angles = [angle_x * 180 / np.pi, angle_y * 180 / np.pi, angle_z * 180 / np.pi]
-        self.translation = self.new_mesh.get_center() - self.ref_com
+        return matrix
 
     def correspondence_array(self):
         return self.registration.correspondence_set
